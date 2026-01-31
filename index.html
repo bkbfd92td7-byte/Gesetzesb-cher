@@ -1,0 +1,979 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>Gesetzebücher</title>
+  <style>
+    :root{
+      --bg:#0b0d12; --card:#141826; --text:#e9eefc; --muted:#a8b2cf;
+      --accent:#7aa2ff; --accent2:#4ad6a7; --danger:#ff6b6b; --line:#26304a;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 18px; --pad: 16px;
+      --safe-top: env(safe-area-inset-top);
+      --safe-bot: env(safe-area-inset-bottom);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:-apple-system, system-ui, Segoe UI, Roboto, Helvetica, Arial;
+      background:
+        radial-gradient(1200px 600px at 30% -10%, rgba(122,162,255,.25), transparent 60%),
+        radial-gradient(900px 500px at 100% 0%, rgba(74,214,167,.18), transparent 55%),
+        var(--bg);
+      color:var(--text);
+      -webkit-font-smoothing: antialiased;
+      overscroll-behavior:none;
+    }
+    button,input,textarea{font:inherit}
+    .app{
+      height:100%;
+      display:flex; flex-direction:column;
+      padding-top:max(var(--safe-top), 10px);
+      padding-bottom:max(var(--safe-bot), 10px);
+    }
+    header{
+      padding:12px var(--pad) 10px;
+      display:flex; align-items:center; gap:12px;
+    }
+    .logo{
+      width:42px;height:42px;border-radius:14px;
+      background:linear-gradient(135deg, rgba(122,162,255,.85), rgba(74,214,167,.75));
+      box-shadow:var(--shadow);
+      display:flex;align-items:center;justify-content:center;
+      font-weight:900;color:#09101f;
+      user-select:none;
+    }
+    .titlewrap{flex:1; min-width:0}
+    .title{font-weight:900; font-size:16px; line-height:1.1;}
+    .subtitle{
+      color:var(--muted); font-size:12px; margin-top:2px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .iconbtn{
+      border:1px solid var(--line);
+      background: rgba(20,24,38,.7);
+      color:var(--text);
+      border-radius:14px;
+      padding:10px 12px;
+      display:flex; align-items:center; gap:8px;
+      -webkit-tap-highlight-color:transparent;
+      user-select:none;
+    }
+    .iconbtn:active{transform:translateY(1px)}
+    .content{
+      flex:1;
+      padding:0 var(--pad) var(--pad);
+      display:flex; flex-direction:column; gap:12px;
+      min-height:0;
+    }
+    .searchbar{
+      background: rgba(20,24,38,.85);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:10px 12px;
+      display:flex; align-items:center; gap:10px;
+      box-shadow:var(--shadow);
+    }
+    .searchbar input{
+      flex:1; border:0; outline:none;
+      background:transparent; color:var(--text);
+      font-size:15px;
+    }
+    .pill{
+      font-size:12px; color:var(--muted);
+      border:1px solid var(--line);
+      padding:6px 10px; border-radius:999px;
+      background:rgba(16,20,35,.6);
+      white-space:nowrap;
+      user-select:none;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      gap:12px;
+      overflow:auto;
+      -webkit-overflow-scrolling:touch;
+      padding-bottom:4px;
+    }
+    .book{
+      background:linear-gradient(180deg, rgba(20,24,38,.92), rgba(16,20,35,.92));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:14px;
+      box-shadow:var(--shadow);
+      min-height:120px;
+      display:flex; flex-direction:column; justify-content:space-between;
+      -webkit-tap-highlight-color:transparent;
+      user-select:none;
+      cursor:pointer;
+    }
+    .book:active{transform:translateY(1px)}
+    .abbr{font-weight:950; font-size:18px; letter-spacing:.6px;}
+    .booktitle{color:var(--muted); font-size:12px; line-height:1.25; margin-top:6px;}
+    .meta{display:flex; align-items:center; justify-content:space-between; margin-top:10px; gap:8px;}
+    .badge{
+      font-size:11px; color:#0b0d12;
+      background:rgba(74,214,167,.95);
+      border-radius:999px; padding:6px 10px;
+      font-weight:800;
+      user-select:none;
+    }
+    .favtag{
+      font-size:12px; color:var(--muted);
+      display:flex; align-items:center; gap:6px;
+      border:1px dashed rgba(122,162,255,.35);
+      border-radius:999px; padding:6px 10px;
+      background:rgba(122,162,255,.08);
+      user-select:none;
+    }
+    .view{
+      background: rgba(16,20,35,.75);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      display:flex; flex-direction:column;
+      min-height:0;
+    }
+    .hidden{display:none !important}
+    .viewhead{
+      padding:12px 12px 10px;
+      display:flex; align-items:center; gap:10px;
+      border-bottom:1px solid rgba(38,48,74,.8);
+      background:rgba(20,24,38,.75);
+    }
+    .back{
+      border:1px solid var(--line);
+      background:rgba(16,20,35,.65);
+      color:var(--text);
+      border-radius:14px;
+      padding:10px 12px;
+      -webkit-tap-highlight-color:transparent;
+      user-select:none;
+    }
+    .back:active{transform:translateY(1px)}
+    .lawtitle{flex:1; min-width:0}
+    .lawtitle .top{
+      font-weight:900; font-size:14px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .lawtitle .bot{
+      color:var(--muted); font-size:12px; margin-top:2px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .tabs{display:flex; gap:8px; padding:10px 12px 0; background:rgba(16,20,35,.55);}
+    .tab{
+      flex:1;
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:10px 12px;
+      background:rgba(20,24,38,.65);
+      color:var(--muted);
+      font-weight:800;
+      text-align:center;
+      -webkit-tap-highlight-color:transparent;
+      user-select:none;
+    }
+    .tab.active{
+      color:var(--text);
+      border-color:rgba(122,162,255,.55);
+      background:rgba(122,162,255,.14);
+    }
+    .panel{
+      padding:12px;
+      overflow:auto;
+      -webkit-overflow-scrolling:touch;
+      min-height:0;
+    }
+    .row{
+      border:1px solid rgba(38,48,74,.8);
+      background:rgba(20,24,38,.65);
+      border-radius:16px;
+      padding:12px;
+      margin-bottom:10px;
+      -webkit-tap-highlight-color:transparent;
+      user-select:none;
+      cursor:pointer;
+    }
+    .row:active{transform:translateY(1px)}
+    .row .k{font-weight:950; margin-bottom:6px;}
+    .row .h{color:var(--muted); font-size:12px; line-height:1.25;}
+    .norm{
+      border:1px solid rgba(38,48,74,.9);
+      background:rgba(20,24,38,.75);
+      border-radius:18px;
+      padding:14px;
+    }
+    .norm .k{font-weight:950; font-size:16px;}
+    .norm .h{color:var(--muted); font-size:12px; margin-top:4px;}
+    .norm .t{margin-top:10px; line-height:1.45; white-space:pre-wrap;}
+    .actions{display:flex; gap:10px; margin-top:12px;}
+    .actions button{
+      flex:1;
+      border:1px solid var(--line);
+      background:rgba(16,20,35,.7);
+      color:var(--text);
+      border-radius:14px;
+      padding:10px 12px;
+      -webkit-tap-highlight-color:transparent;
+      user-select:none;
+    }
+    .actions button:active{transform:translateY(1px)}
+    .small{color:var(--muted); font-size:12px; line-height:1.35;}
+
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:calc(14px + var(--safe-bot));
+      transform:translateX(-50%);
+      background:rgba(20,24,38,.95);
+      border:1px solid rgba(122,162,255,.35);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:14px;
+      box-shadow:var(--shadow);
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .18s ease;
+      max-width:min(92vw, 560px);
+      font-size:13px;
+    }
+    .toast.show{opacity:1}
+
+    .modalback{
+      position:fixed; inset:0;
+      background:rgba(0,0,0,.55);
+      display:none;
+      align-items:flex-end;
+      justify-content:center;
+      padding:14px var(--pad) calc(14px + var(--safe-bot));
+    }
+    .modalback.show{display:flex}
+    .modal{
+      width:min(720px, 100%);
+      background:rgba(16,20,35,.96);
+      border:1px solid rgba(38,48,74,.95);
+      border-radius:22px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .modalhead{
+      padding:12px 14px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      border-bottom:1px solid rgba(38,48,74,.8);
+      background:rgba(20,24,38,.75);
+    }
+    .modalhead .mttl{font-weight:950}
+    .modalhead button{
+      border:1px solid var(--line);
+      background:rgba(16,20,35,.75);
+      color:var(--text);
+      border-radius:12px;
+      padding:8px 10px;
+      user-select:none;
+    }
+    .modalbody{padding:12px 14px}
+    textarea{
+      width:100%;
+      min-height:220px;
+      resize:vertical;
+      border-radius:16px;
+      border:1px solid rgba(38,48,74,.9);
+      background:rgba(20,24,38,.65);
+      color:var(--text);
+      padding:12px;
+      outline:none;
+      font-size:13px;
+      line-height:1.35;
+    }
+    .modalactions{display:flex; gap:10px; padding:12px 14px 14px;}
+    .primary{background:rgba(122,162,255,.18) !important; border-color:rgba(122,162,255,.55) !important;}
+    .danger{background:rgba(255,107,107,.14) !important; border-color:rgba(255,107,107,.45) !important;}
+    code{color:#d9e3ff}
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <header>
+      <div class="logo">§</div>
+      <div class="titlewrap">
+        <div class="title">Gesetzebücher</div>
+        <div class="subtitle" id="subtitle">Bücher öffnen · §/Art. suchen · Demo-Daten (Import/Export)</div>
+      </div>
+      <button class="iconbtn" id="manageBtn" title="Daten verwalten">
+        <span style="font-weight:950">⋯</span><span style="font-weight:800;color:var(--muted)">Daten</span>
+      </button>
+    </header>
+
+    <div class="content">
+      <div class="searchbar">
+        <span style="opacity:.9">🔎</span>
+        <input id="globalSearch" placeholder="Suche: § 163b, Art 13, 'Wohnung', 'Durchsuchung' …" autocomplete="off" />
+        <span class="pill" id="scopePill">Alle Bücher</span>
+      </div>
+
+      <div id="home" class="grid" aria-label="Bücherregal"></div>
+
+      <div id="lawView" class="view hidden" aria-label="Buchansicht">
+        <div class="viewhead">
+          <button class="back" id="backBtn">←</button>
+          <div class="lawtitle">
+            <div class="top" id="lawTop">—</div>
+            <div class="bot" id="lawBot">—</div>
+          </div>
+          <button class="iconbtn" id="favBtn" title="Favorit">★</button>
+        </div>
+
+        <div class="tabs">
+          <button class="tab active" id="tabTOC">Inhalt</button>
+          <button class="tab" id="tabSearch">Suche</button>
+          <button class="tab" id="tabRead">Anzeige</button>
+        </div>
+
+        <div class="panel" id="panelTOC"></div>
+        <div class="panel hidden" id="panelSearch"></div>
+        <div class="panel hidden" id="panelRead"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="modalback" id="modalBack" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modalhead">
+        <div class="mttl">Daten verwalten</div>
+        <button id="closeModal">Schließen</button>
+      </div>
+      <div class="modalbody">
+        <div class="small">
+          Import-Format: Array von Büchern.<br/>
+          Buch: <code>{ id, abbr, title, updated?, norms: [{ key, heading?, text }] }</code>
+        </div>
+        <div style="height:10px"></div>
+        <textarea id="importArea" spellcheck="false"></textarea>
+        <div style="height:10px"></div>
+        <div class="small">
+          Diese Datei enthält absichtlich nur kurze Demo-Auszüge. Du kannst vollständige Texte selbst importieren.
+        </div>
+      </div>
+      <div class="modalactions">
+        <button class="primary" id="importBtn">Importieren / Ersetzen</button>
+        <button id="exportBtn">Export (Zwischenablage)</button>
+        <button class="danger" id="resetBtn">Zurücksetzen (Demo)</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const LS_KEY = "lawbooks_v1";
+  const LS_FAV = "lawbooks_fav_v1";
+
+  // Kleine Demo (funktional). Ersetze/erweitere per Import.
+  const DEMO_BOOKS = [
+    {
+      id: "gg",
+      abbr: "GG",
+      title: "Grundgesetz",
+      updated: "Demo",
+      norms: [
+        { key:"Art 1", heading:"Menschenwürde", text:"(1) Die Würde des Menschen ist unantastbar.\n(2) ..." },
+        { key:"Art 2", heading:"Allgemeine Handlungsfreiheit", text:"(1) Jeder hat das Recht auf die freie Entfaltung seiner Persönlichkeit...\n(2) ..." },
+        { key:"Art 13", heading:"Unverletzlichkeit der Wohnung", text:"(1) Die Wohnung ist unverletzlich.\n(2) Durchsuchungen dürfen nur durch den Richter...\n(3) ...\n(4) ...\n(5) ...\n(6) ..." }
+      ]
+    },
+    {
+      id: "stpo",
+      abbr: "StPO",
+      title: "Strafprozessordnung",
+      updated: "Demo",
+      norms: [
+        { key:"§ 102", heading:"Durchsuchung bei Beschuldigten", text:"Bei dem, welcher als Täter oder Teilnehmer einer Straftat verdächtig ist, ..."},
+        { key:"§ 103", heading:"Durchsuchung bei anderen Personen", text:"Bei anderen Personen sind Durchsuchungen nur zulässig, wenn ..."},
+        { key:"§ 163b", heading:"Identitätsfeststellung", text:"(1) Ist jemand einer Straftat verdächtig, dürfen ...\n(2) ..." }
+      ]
+    }
+  ];
+
+  // ---------- Helpers ----------
+  const $ = (id) => document.getElementById(id);
+
+  function toast(msg){
+    const t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toast._tm);
+    toast._tm = setTimeout(() => t.classList.remove("show"), 1400);
+  }
+
+  function safeParse(json){
+    try { return { ok:true, val: JSON.parse(json) }; }
+    catch(e){ return { ok:false, err: e }; }
+  }
+
+  function normKeyNormalize(s){
+    // tolerant: "§163b", " 163b ", "art.13", "Art13", "Art 13"
+    let x = (s || "").trim().toLowerCase();
+    x = x.replace(/\u00a0/g, " ");
+    x = x.replace(/[.]/g, "");
+    x = x.replace(/\s+/g, " ");
+    x = x.replace(/^paragraph\s+/g, "§ ");
+    x = x.replace(/^par\s+/g, "§ ");
+    x = x.replace(/^art\s*/g, "art ");
+    x = x.replace(/^§\s*/g, "§ ");
+    // if user just typed number/number+letter, keep as-is for matching
+    return x;
+  }
+
+  function makeSearchNeedle(raw){
+    const q = normKeyNormalize(raw);
+    // if just "163b" -> match "§ 163b" too
+    const looksLikePar = /^[0-9]{1,4}[a-z]?$/i.test(raw.trim());
+    return { q, looksLikePar };
+  }
+
+  function bookLabel(book){
+    return `${book.abbr} – ${book.title}${book.updated ? " · " + book.updated : ""}`;
+  }
+
+  // ---------- State ----------
+  let books = loadBooks();
+  let fav = loadFav();
+  let currentBookId = null;
+  let currentNormKey = null;
+
+  // ---------- Elements ----------
+  const home = $("home");
+  const lawView = $("lawView");
+  const subtitle = $("subtitle");
+  const globalSearch = $("globalSearch");
+  const scopePill = $("scopePill");
+
+  const backBtn = $("backBtn");
+  const lawTop = $("lawTop");
+  const lawBot = $("lawBot");
+  const favBtn = $("favBtn");
+
+  const tabTOC = $("tabTOC");
+  const tabSearch = $("tabSearch");
+  const tabRead = $("tabRead");
+
+  const panelTOC = $("panelTOC");
+  const panelSearch = $("panelSearch");
+  const panelRead = $("panelRead");
+
+  const manageBtn = $("manageBtn");
+  const modalBack = $("modalBack");
+  const closeModal = $("closeModal");
+  const importArea = $("importArea");
+  const importBtn = $("importBtn");
+  const exportBtn = $("exportBtn");
+  const resetBtn = $("resetBtn");
+
+  // ---------- Load/Save ----------
+  function loadBooks(){
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return structuredClone(DEMO_BOOKS);
+    const p = safeParse(raw);
+    if(!p.ok) return structuredClone(DEMO_BOOKS);
+    if(!Array.isArray(p.val)) return structuredClone(DEMO_BOOKS);
+    return p.val;
+  }
+
+  function saveBooks(){
+    localStorage.setItem(LS_KEY, JSON.stringify(books));
+  }
+
+  function loadFav(){
+    const raw = localStorage.getItem(LS_FAV);
+    if(!raw) return [];
+    const p = safeParse(raw);
+    if(!p.ok || !Array.isArray(p.val)) return [];
+    return p.val;
+  }
+
+  function saveFav(){
+    localStorage.setItem(LS_FAV, JSON.stringify(fav));
+  }
+
+  function structuredClone(obj){
+    return JSON.parse(JSON.stringify(obj));
+  }
+
+  // ---------- Rendering ----------
+  function renderHome(filterText=""){
+    home.innerHTML = "";
+
+    const ordered = sortBooksByFavThenAbbr(books);
+    const needle = filterText.trim() ? makeSearchNeedle(filterText.trim()) : null;
+
+    // If global search has text: show search results as "virtual book" rows at top (across all books)
+    if(needle){
+      const hits = searchAcrossAll(filterText.trim()).slice(0, 30);
+      const box = document.createElement("div");
+      box.style.gridColumn = "1 / -1";
+      box.style.marginBottom = "2px";
+      box.innerHTML = `<div class="small" style="margin:2px 2px 10px;">
+        Treffer in allen Büchern: <b>${hits.length}</b> (max. 30 angezeigt)
+      </div>`;
+      home.appendChild(box);
+
+      if(hits.length === 0){
+        const empty = document.createElement("div");
+        empty.style.gridColumn = "1 / -1";
+        empty.className = "row";
+        empty.innerHTML = `<div class="k">Keine Treffer</div><div class="h">Versuche z. B. „§ 163b“, „Art 13“, „Durchsuchung“.</div>`;
+        home.appendChild(empty);
+      } else {
+        for(const h of hits){
+          const r = document.createElement("div");
+          r.style.gridColumn = "1 / -1";
+          r.className = "row";
+          r.innerHTML = `
+            <div class="k">${escapeHtml(h.norm.key)} <span style="color:var(--muted);font-weight:800">(${escapeHtml(h.book.abbr)})</span></div>
+            <div class="h">${escapeHtml(h.norm.heading || "")}${h.snippet ? " · " + escapeHtml(h.snippet) : ""}</div>
+          `;
+          r.addEventListener("click", () => openBook(h.book.id, h.norm.key, "read"));
+          home.appendChild(r);
+        }
+      }
+
+      const divider = document.createElement("div");
+      divider.style.gridColumn = "1 / -1";
+      divider.innerHTML = `<div class="small" style="margin:4px 2px 10px;opacity:.9;">Bücherregal</div>`;
+      home.appendChild(divider);
+    }
+
+    for(const book of ordered){
+      const card = document.createElement("div");
+      card.className = "book";
+      card.innerHTML = `
+        <div>
+          <div class="abbr">${escapeHtml(book.abbr)}</div>
+          <div class="booktitle">${escapeHtml(book.title)}</div>
+        </div>
+        <div class="meta">
+          <div class="badge">${book.norms?.length || 0} Normen</div>
+          <div class="favtag">${fav.includes(book.id) ? "★ Favorit" : "☆"}</div>
+        </div>
+      `;
+      card.addEventListener("click", () => openBook(book.id));
+      home.appendChild(card);
+    }
+
+    subtitle.textContent = needle
+      ? `Suche aktiv: „${filterText.trim()}“ · Tippe Treffer an oder öffne ein Buch`
+      : "Bücher öffnen · §/Art. suchen · Demo-Daten (Import/Export)";
+  }
+
+  function sortBooksByFavThenAbbr(arr){
+    return [...arr].sort((a,b) => {
+      const af = fav.includes(a.id) ? 0 : 1;
+      const bf = fav.includes(b.id) ? 0 : 1;
+      if(af !== bf) return af - bf;
+      return (a.abbr || "").localeCompare(b.abbr || "");
+    });
+  }
+
+  function openBook(bookId, normKey=null, tab="toc"){
+    currentBookId = bookId;
+    currentNormKey = normKey;
+
+    const book = books.find(b => b.id === bookId);
+    if(!book){ toast("Buch nicht gefunden"); return; }
+
+    lawTop.textContent = book.abbr;
+    lawBot.textContent = book.title;
+
+    favBtn.textContent = fav.includes(bookId) ? "★" : "☆";
+
+    // set scope pill
+    scopePill.textContent = book.abbr;
+
+    // show view
+    $("home").classList.add("hidden");
+    lawView.classList.remove("hidden");
+
+    // render panels
+    renderTOC(book);
+    renderSearchPanel(book);
+    renderReadPanel(book, normKey || (book.norms?.[0]?.key ?? null));
+
+    // select tab
+    setTab(tab);
+
+    // if provided normKey, jump to read
+    if(normKey){
+      setTab("read");
+      renderReadPanel(book, normKey);
+    } else if(tab === "read") {
+      // show first norm if read requested
+      const first = book.norms?.[0]?.key;
+      if(first) renderReadPanel(book, first);
+    }
+  }
+
+  function closeBook(){
+    currentBookId = null;
+    currentNormKey = null;
+    $("home").classList.remove("hidden");
+    lawView.classList.add("hidden");
+    scopePill.textContent = "Alle Bücher";
+  }
+
+  function setTab(which){
+    const map = { toc: tabTOC, search: tabSearch, read: tabRead };
+    tabTOC.classList.remove("active");
+    tabSearch.classList.remove("active");
+    tabRead.classList.remove("active");
+    panelTOC.classList.add("hidden");
+    panelSearch.classList.add("hidden");
+    panelRead.classList.add("hidden");
+
+    map[which]?.classList.add("active");
+    if(which === "toc") panelTOC.classList.remove("hidden");
+    if(which === "search") panelSearch.classList.remove("hidden");
+    if(which === "read") panelRead.classList.remove("hidden");
+  }
+
+  function renderTOC(book){
+    panelTOC.innerHTML = "";
+    const info = document.createElement("div");
+    info.className = "small";
+    info.style.marginBottom = "10px";
+    info.innerHTML = `Tippe eine Norm an, um sie zu öffnen.`;
+    panelTOC.appendChild(info);
+
+    for(const n of (book.norms || [])){
+      const r = document.createElement("div");
+      r.className = "row";
+      r.innerHTML = `
+        <div class="k">${escapeHtml(n.key)}</div>
+        <div class="h">${escapeHtml(n.heading || "")}</div>
+      `;
+      r.addEventListener("click", () => {
+        currentNormKey = n.key;
+        renderReadPanel(book, n.key);
+        setTab("read");
+      });
+      panelTOC.appendChild(r);
+    }
+  }
+
+  function renderSearchPanel(book){
+    panelSearch.innerHTML = "";
+
+    const box = document.createElement("div");
+    box.className = "searchbar";
+    box.style.boxShadow = "none";
+    box.style.marginBottom = "10px";
+    box.innerHTML = `
+      <span style="opacity:.9">🔎</span>
+      <input id="bookSearch" placeholder="In ${escapeHtml(book.abbr)} suchen: §/Art. oder Volltext…" autocomplete="off" />
+      <span class="pill">${escapeHtml(book.abbr)}</span>
+    `;
+    panelSearch.appendChild(box);
+
+    const list = document.createElement("div");
+    panelSearch.appendChild(list);
+
+    const input = box.querySelector("#bookSearch");
+    input.addEventListener("input", () => {
+      const q = input.value.trim();
+      list.innerHTML = "";
+      if(!q){
+        const hint = document.createElement("div");
+        hint.className = "small";
+        hint.textContent = "Eingabe: z. B. „§ 163b“, „Art 13“, „Durchsuchung“.";
+        list.appendChild(hint);
+        return;
+      }
+      const hits = searchInBook(book, q).slice(0, 50);
+      if(hits.length === 0){
+        const empty = document.createElement("div");
+        empty.className = "row";
+        empty.innerHTML = `<div class="k">Keine Treffer</div><div class="h">Versuche eine andere Schreibweise.</div>`;
+        list.appendChild(empty);
+        return;
+      }
+      for(const h of hits){
+        const r = document.createElement("div");
+        r.className = "row";
+        r.innerHTML = `
+          <div class="k">${escapeHtml(h.norm.key)}</div>
+          <div class="h">${escapeHtml(h.norm.heading || "")}${h.snippet ? " · " + escapeHtml(h.snippet) : ""}</div>
+        `;
+        r.addEventListener("click", () => {
+          currentNormKey = h.norm.key;
+          renderReadPanel(book, h.norm.key);
+          setTab("read");
+        });
+        list.appendChild(r);
+      }
+    });
+
+    // initial hint
+    const hint = document.createElement("div");
+    hint.className = "small";
+    hint.textContent = "Eingabe: z. B. „§ 163b“, „Art 13“, „Durchsuchung“.";
+    list.appendChild(hint);
+  }
+
+  function renderReadPanel(book, normKey){
+    panelRead.innerHTML = "";
+
+    const norm = (book.norms || []).find(n => normalizeKey(n.key) === normalizeKey(normKey)) || null;
+    if(!norm){
+      const r = document.createElement("div");
+      r.className = "row";
+      r.innerHTML = `<div class="k">Norm nicht gefunden</div><div class="h">Versuche die Suche oder wähle eine Norm aus dem Inhalt.</div>`;
+      panelRead.appendChild(r);
+      return;
+    }
+
+    const card = document.createElement("div");
+    card.className = "norm";
+    card.innerHTML = `
+      <div class="k">${escapeHtml(norm.key)}</div>
+      <div class="h">${escapeHtml(norm.heading || "")}</div>
+      <div class="t">${escapeHtml(norm.text || "")}</div>
+      <div class="actions">
+        <button id="copyBtn">Kopieren</button>
+        <button id="shareBtn">Teilen</button>
+      </div>
+      <div class="small" style="margin-top:10px;">
+        Tipp: Nutze Import/Export für vollständige Texte.
+      </div>
+    `;
+    panelRead.appendChild(card);
+
+    card.querySelector("#copyBtn").addEventListener("click", async () => {
+      const txt = `${book.abbr} ${norm.key}\n${norm.heading ? norm.heading + "\n" : ""}${norm.text || ""}`;
+      try{
+        await navigator.clipboard.writeText(txt);
+        toast("Kopiert");
+      } catch(e){
+        fallbackCopy(txt);
+      }
+    });
+
+    card.querySelector("#shareBtn").addEventListener("click", async () => {
+      const txt = `${book.abbr} ${norm.key}\n${norm.heading ? norm.heading + "\n" : ""}${norm.text || ""}`;
+      if(navigator.share){
+        try{
+          await navigator.share({ title: `${book.abbr} ${norm.key}`, text: txt });
+        } catch(_) {}
+      } else {
+        fallbackCopy(txt);
+      }
+    });
+  }
+
+  function fallbackCopy(text){
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try{ document.execCommand("copy"); toast("Kopiert"); }
+    catch(e){ toast("Kopieren nicht möglich"); }
+    document.body.removeChild(ta);
+  }
+
+  function escapeHtml(s){
+    return String(s ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  function normalizeKey(key){
+    // normalize for matching keys
+    return normKeyNormalize(String(key || ""));
+  }
+
+  // ---------- Search ----------
+  function searchInBook(book, rawQuery){
+    const { q, looksLikePar } = makeSearchNeedle(rawQuery);
+    const out = [];
+    const norms = book.norms || [];
+
+    for(const n of norms){
+      const k = normKeyNormalize(n.key);
+      const h = (n.heading || "").toLowerCase();
+      const t = (n.text || "").toLowerCase();
+
+      let score = 0;
+
+      // Direct key match
+      if(k === q) score += 100;
+      if(q && k.includes(q)) score += 40;
+
+      // If user typed "163b", match "§ 163b"
+      if(looksLikePar){
+        const qnum = rawQuery.trim().toLowerCase();
+        if(k === ("§ " + qnum) || k === ("§" + qnum)) score += 80;
+        if(k.includes("§ " + qnum) || k.includes("§" + qnum)) score += 50;
+      }
+
+      // Fulltext
+      if(q && h.includes(q)) score += 20;
+      if(q && t.includes(q)) score += 15;
+
+      if(score > 0){
+        out.push({ norm:n, score, snippet: makeSnippet(n, q) });
+      }
+    }
+
+    out.sort((a,b) => b.score - a.score || a.norm.key.localeCompare(b.norm.key));
+    return out;
+  }
+
+  function searchAcrossAll(rawQuery){
+    const hits = [];
+    for(const book of books){
+      for(const h of searchInBook(book, rawQuery)){
+        hits.push({ book, norm: h.norm, score: h.score, snippet: h.snippet });
+      }
+    }
+    hits.sort((a,b) => b.score - a.score || a.book.abbr.localeCompare(b.book.abbr));
+    return hits;
+  }
+
+  function makeSnippet(norm, q){
+    if(!q) return "";
+    const text = (norm.text || "");
+    const low = text.toLowerCase();
+    const idx = low.indexOf(q);
+    if(idx < 0) return "";
+    const start = Math.max(0, idx - 24);
+    const end = Math.min(text.length, idx + q.length + 36);
+    let snip = text.slice(start, end).replace(/\s+/g, " ").trim();
+    if(start > 0) snip = "…" + snip;
+    if(end < text.length) snip = snip + "…";
+    return snip;
+  }
+
+  // ---------- Modal ----------
+  function openModal(){
+    importArea.value = JSON.stringify(books, null, 2);
+    modalBack.classList.add("show");
+  }
+  function closeModalFn(){
+    modalBack.classList.remove("show");
+  }
+
+  // ---------- Events ----------
+  backBtn.addEventListener("click", closeBook);
+
+  tabTOC.addEventListener("click", () => setTab("toc"));
+  tabSearch.addEventListener("click", () => setTab("search"));
+  tabRead.addEventListener("click", () => setTab("read"));
+
+  manageBtn.addEventListener("click", openModal);
+  closeModal.addEventListener("click", closeModalFn);
+  modalBack.addEventListener("click", (e) => {
+    if(e.target === modalBack) closeModalFn();
+  });
+
+  importBtn.addEventListener("click", () => {
+    const p = safeParse(importArea.value);
+    if(!p.ok){ toast("JSON ungültig"); return; }
+    if(!Array.isArray(p.val)){ toast("Import muss ein Array sein"); return; }
+
+    // basic validation
+    for(const b of p.val){
+      if(!b || typeof b !== "object" || !b.id || !b.abbr || !b.title || !Array.isArray(b.norms)){
+        toast("Import-Format falsch");
+        return;
+      }
+      for(const n of b.norms){
+        if(!n || typeof n !== "object" || !n.key){
+          toast("Norm ohne key gefunden");
+          return;
+        }
+        if(typeof n.text !== "string") n.text = String(n.text ?? "");
+        if(n.heading != null && typeof n.heading !== "string") n.heading = String(n.heading);
+      }
+    }
+
+    books = p.val;
+    saveBooks();
+    closeModalFn();
+    closeBook();
+    renderHome(globalSearch.value);
+    toast("Importiert");
+  });
+
+  exportBtn.addEventListener("click", async () => {
+    const txt = JSON.stringify(books, null, 2);
+    try{
+      await navigator.clipboard.writeText(txt);
+      toast("Export kopiert");
+    } catch(e){
+      fallbackCopy(txt);
+    }
+  });
+
+  resetBtn.addEventListener("click", () => {
+    books = structuredClone(DEMO_BOOKS);
+    saveBooks();
+    closeModalFn();
+    closeBook();
+    renderHome("");
+    globalSearch.value = "";
+    toast("Zurückgesetzt");
+  });
+
+  favBtn.addEventListener("click", () => {
+    if(!currentBookId) return;
+    const idx = fav.indexOf(currentBookId);
+    if(idx >= 0) fav.splice(idx, 1);
+    else fav.push(currentBookId);
+    saveFav();
+    favBtn.textContent = fav.includes(currentBookId) ? "★" : "☆";
+    renderHome(globalSearch.value);
+    toast(fav.includes(currentBookId) ? "Favorit" : "Entfernt");
+  });
+
+  globalSearch.addEventListener("input", () => {
+    const q = globalSearch.value;
+    // when a book is open, interpret global search as within current book
+    if(currentBookId){
+      const book = books.find(b => b.id === currentBookId);
+      if(!book) return;
+      setTab("search");
+      // put query into book search input if present
+      const inp = panelSearch.querySelector("#bookSearch");
+      if(inp){
+        inp.value = q;
+        inp.dispatchEvent(new Event("input"));
+      }
+    } else {
+      renderHome(q);
+    }
+  });
+
+  // when focus in search while book closed, show all books scope
+  scopePill.addEventListener("click", () => {
+    if(currentBookId){
+      closeBook();
+      renderHome(globalSearch.value);
+      toast("Zur Gesamtansicht");
+    }
+  });
+
+  // ---------- Init ----------
+  renderHome("");
+
+})();
+</script>
+</body>
+</html>
