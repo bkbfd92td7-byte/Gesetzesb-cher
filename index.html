@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>Gesetzebücher – Offline</title>
+  <style>
+    :root{
+      --bg:#0b0d12; --card:#141826; --card2:#101423; --text:#e9eefc; --muted:#a8b2cf;
+      --accent:#7aa2ff; --accent2:#4ad6a7; --danger:#ff6b6b; --line:#26304a;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 18px;
+      --pad: 16px;
+      --safe-top: env(safe-area-inset-top);
+      --safe-bot: env(safe-area-inset-bottom);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: -apple-system, system-ui, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: radial-gradient(1200px 600px at 30% -10%, rgba(122,162,255,.25), transparent 60%),
+                  radial-gradient(900px 500px at 100% 0%, rgba(74,214,167,.18), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      -webkit-font-smoothing: antialiased;
+      overscroll-behavior: none;
+    }
+    a{color:inherit}
+    button,input{font:inherit}
+    .app{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      padding-top: max(var(--safe-top), 10px);
+      padding-bottom: max(var(--safe-bot), 10px);
+    }
+    header{
+      padding: 12px var(--pad) 10px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+    .logo{
+      width:42px;height:42px;border-radius:14px;
+      background: linear-gradient(135deg, rgba(122,162,255,.85), rgba(74,214,167,.75));
+      box-shadow: var(--shadow);
+      display:flex;align-items:center;justify-content:center;
+      font-weight:800;color:#09101f;
+    }
+    .titlewrap{flex:1; min-width:0}
+    .title{
+      font-weight:800; letter-spacing:.2px; font-size:16px; line-height:1.1;
+    }
+    .subtitle{
+      color:var(--muted); font-size:12px; margin-top:2px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .iconbtn{
+      border:1px solid var(--line);
+      background: rgba(20,24,38,.7);
+      color:var(--text);
+      border-radius:14px;
+      padding:10px 12px;
+      box-shadow: none;
+      display:flex; align-items:center; gap:8px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .iconbtn:active{transform: translateY(1px)}
+    .content{
+      flex:1;
+      padding: 0 var(--pad) var(--pad);
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      min-height:0;
+    }
+    .searchbar{
+      background: rgba(20,24,38,.85);
+      border:1px solid var(--line);
+      border-radius: 18px;
+      padding: 10px 12px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      box-shadow: var(--shadow);
+    }
+    .searchbar input{
+      flex:1;
+      border:0;
+      outline:none;
+      background: transparent;
+      color:var(--text);
+      font-size:15px;
+    }
+    .pill{
+      font-size:12px;
+      color:var(--muted);
+      border:1px solid var(--line);
+      padding:6px 10px;
+      border-radius: 999px;
+      background: rgba(16,20,35,.6);
+      white-space:nowrap;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap:12px;
+      overflow:auto;
+      padding-bottom: 4px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .book{
+      background: linear-gradient(180deg, rgba(20,24,38,.92), rgba(16,20,35,.92));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: var(--shadow);
+      position:relative;
+      min-height: 120px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      -webkit-tap-highlight-color: transparent;
+      cursor:pointer;
+      user-select:none;
+    }
+    .book:active{transform: translateY(1px)}
+    .abbr{
+      font-weight:900;
+      font-size:18px;
+      letter-spacing:.6px;
+    }
+    .booktitle{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.25;
+      margin-top:6px;
+    }
+    .meta{
+      display:flex; align-items:center; justify-content:space-between;
+      margin-top:10px; gap:8px;
+    }
+    .badge{
+      font-size:11px;
+      color:#0b0d12;
+      background: rgba(74,214,167,.95);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-weight:700;
+    }
+    .fav{
+      font-size:12px;
+      color: var(--muted);
+      display:flex; align-items:center; gap:6px;
+      border:1px dashed rgba(122,162,255,.35);
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: rgba(122,162,255,.08);
+    }
+    .view{
+      background: rgba(16,20,35,.75);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+    }
+    .viewhead{
+      padding: 12px 12px 10px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      border-bottom:1px solid rgba(38,48,74,.8);
+      background: rgba(20,24,38,.75);
+    }
+    .back{
+      border:1px solid var(--line);
+      background: rgba(16,20,35,.65);
+      color:var(--text);
+      border-radius: 14px;
+      padding:10px 12px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .back:active{transform: translateY(1px)}
+    .lawtitle{flex:1; min-width:0}
+    .lawtitle .top{
+      font-weight:900;
+      font-size:14px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .lawtitle .bot{
+      color:var(--muted);
+      font-size:12px;
+      margin-top:2px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .tabs{
+      display:flex;
+      gap:8px;
+      padding: 10px 12px 0;
+      background: rgba(16,20,35,.55);
+    }
+    .tab{
+      flex:1;
+      border:1px solid var(--line);
+      border-radius: 999px;
+      padding: 10px 12px;
+      background: rgba(20,24,38,.65);
+      color:var(--muted);
+      font-weight:700;
+      text-align:center;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .tab.active{
+      color: var(--text);
+      border-color: rgba(122,162,255,.55);
+      background: rgba(122,162,255,.14);
+    }
+    .panel{
+      padding:12px;
+      overflow:auto;
+      -webkit-overflow-scrolling: touch;
+      min-height:0;
+    }
+    .row{
+      border:1px solid rgba(38,48,74,.8);
+      background: rgba(20,24,38,.65);
+      border-radius: 16px;
+      padding:12px;
+      margin-bottom:10px;
+      -webkit-tap-highlight-color: transparent;
+      cursor:pointer;
+    }
+    .row:active{transform: translateY(1px)}
+    .row .k{
+      font-weight:900;
+      margin-bottom:6px;
+    }
+    .row .h{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.25;
+    }
+    .norm{
+      border:1px solid rgba(38,48,74,.9);
+      background: rgba(20,24,38,.75);
+      border-radius: 18px;
+      padding: 14px;
+    }
+    .norm .k{
+      font-weight:950;
+      font-size:16px;
+      letter-spacing:.2px;
+    }
+    .norm .h{
+      color:var(--muted);
+      font-size:12px;
+      margin-top:4px;
+    }
+    .norm .t{
+      margin-top:10px;
+      line-height:1.45;
+      white-space:pre-wrap;
+    }
+    .actions{
+      display:flex;
+      gap:10px;
+      margin-top:12px;
+    }
+    .actions button{
+      flex:1;
+      border:1px solid var(--line);
+      background: rgba(16,20,35,.7);
+      color:var(--text);
+      border-radius: 14px;
+      padding: 10px 12px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .actions button:active{transform: translateY(1px)}
+    .small{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.35;
+    }
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: calc(14px + var(--safe-bot));
+      transform: translateX(-50%);
+      background: rgba(20,24,38,.95);
+      border:1px solid rgba(122,162,255,.35);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .18s ease;
+      max-width: min(92vw, 560px);
+      font-size: 13px;
+    }
+    .toast.show{opacity:1}
+    .modalback{
+      position: fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:flex-end;
+      justify-content:center;
+      padding: 14px var(--pad) calc(14px + var(--safe-bot));
+    }
+    .modalback.show{display:flex}
+    .modal{
+      width:min(720px, 100%);
+      background: rgba(16,20,35,.96);
+      border:1px solid rgba(38,48,74,.95);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .modalhead{
+      padding:12px 14px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      border-bottom:1px solid rgba(38,48,74,.8);
+      background: rgba(20,24,38,.75);
+    }
+    .modalhead .mttl{font-weight:900}
+    .modalhead button{
+      border:1px solid var(--line);
+      background: rgba(16,20,35,.75);
+      color:var(--text);
+      border-radius: 12px;
+      padding:8px 10px;
+    }
+    .modalbody{padding: 12px 14px}
+    textarea{
+      width:100%;
+      min-height: 180px;
+      resize: vertical;
+      border-radius: 16px;
+      border:1px solid rgba(38,48,74,.9);
+      background: rgba(20,24,38,.65);
+      color: var(--text);
+      padding:12px;
+      outline:none;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .modalactions{
+      display:flex; gap:10px;
+      padding: 12px 14px 14px;
+    }
+    .primary{
+      background: rgba(122,162,255,.18) !important;
+      border-color: rgba(122,162,255,.55) !important;
+    }
+    .danger{
+      background: rgba(255,107,107,.14) !important;
+      border-color: rgba(255,107,107,.45) !important;
+    }
+    .hidden{display:none !important}
+  </style>
+</head>
+<body>
+<div class="app" id="app">
+  <header>
+    <div class="logo">§</div>
+    <div class="titlewrap">
+      <div class="title">Gesetzebücher</div>
+      <div class="subtitle" id="subtitle">Bücher öffnen · §/Art. suchen · offline nutzbar (eingebaute Demo-Daten)</div>
+    </div>
+    <button class="iconbtn" id="manageBtn" title="Daten verwalten">
+      <span style="font-weight:900">⋯</span><span style="font-weight:700;color:var(--muted)">Daten</span>
+    </button>
+  </header>
+
+  <div class="content">
+    <div class="searchbar">
+      <span style="opacity:.9">🔎</span>
+      <input id="globalSearch" placeholder="Suche: § 163b, Art 13, 'Wohnung', 'Durchsuchung' …" autocomplete="off" />
+      <span class="pill" id="scopePill">Alle Bücher</span>
+    </div>
+
+    <div id="home" class="grid" aria-label="Bücherregal"></div>
+
+    <div id="lawView" class="view hidden" aria-label="Buchansicht">
+      <div class="viewhead">
+        <button class="back" id="backBtn">←</button>
+        <div class="lawtitle">
+          <div class="top" id="lawTop">—</div>
+          <div class="bot" id="lawBot">—</div>
+        </div>
+        <button class="iconbtn" id="favBtn" title="Favorit umschalten">★</button>
+      </div>
+      <div class="tabs">
+        <button class="tab active" id="tabTOC">Inhalt</button>
+        <button class="tab" id="tabSearch">Suche</button>
+        <button class="tab" id="tabRead">Anzeige</button>
+      </div>
+      <div class="panel" id="panelTOC"></div>
+      <div class="panel hidden" id="panelSearch"></div>
+      <div class="panel hidden" id="panelRead"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modalback" id="modalBack" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modalhead">
+      <div class="mttl">Daten verwalten</div>
+      <button id="closeModal">Schließen</button>
+    </div>
+    <div class="modalbody">
+      <div class="small">
+        Du kannst eigene Gesetzestexte als JSON importieren (z. B. aus einem eigenen Converter).
+        Format: Array von Büchern. Beispiel ist unten vorgefüllt. (Nur Demo enthalten, nicht vollständig.)
+      </div>
+      <div style="height:10px"></div>
+      <textarea id="importArea" spellcheck="false"></textarea>
+      <div style="height:10px"></div>
+      <div class="small">
+        Hinweis: Reine Gesetzestexte sind i. d. R. offline-freundlich speicherbar. Diese Demo-App liefert bewusst nur ein kleines Beispiel.
+      </div>
+    </div>
+    <div class="modalactions">
+      <button class="primary" id="importBtn">Importieren / Ersetzen</button>
+      <button id="exportBtn">Export (in Zwischenablage)</button>
+      <button class="danger" id="resetBtn">Zurücksetzen (Demo)</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  // ---------- Storage ----------
+  const LS_KEY = "lawbooks_v1";
+  const LS_FAV = "lawbooks_fav_v1";
+
+  // ---------- Demo dataset (nur wenige Normen) ----------
+  const DEMO_BOOKS = [
+    {
+      id: "gg",
+      abbr: "GG",
+      title: "Grundgesetz für die Bundesrepublik Deutschland",
+      updated: "Demo",
+      norms: [
+        {
+          key: "Art 1",
+          heading: "Menschenwürde",
+          text:
+`(1) Die Würde des Menschen ist unantastbar. Sie zu achten und zu schützen ist Verpflichtung aller staatlichen Gewalt.
+(2) Das Deutsche Volk bekennt sich darum zu unverletzlichen und unveräußerlichen Menschenrechten als Grundlage jeder mensch
